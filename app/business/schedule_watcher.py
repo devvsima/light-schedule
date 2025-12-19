@@ -5,6 +5,7 @@
 from datetime import datetime
 from typing import Callable
 
+import pytz
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -113,22 +114,27 @@ class ScheduleWatcher:
 
     def start(self, interval_minutes: int = 30) -> None:
         """
-        Запускает планировщик для проверки расписания
+        Запускает планировщик для проверки расписания в 00:05 по Киеву
 
         Args:
-            interval_minutes: Интервал проверки в минутах (по умолчанию 30)
+            interval_minutes: Не используется, расписание проверяется в 00:05 по Киеву
         """
+        # Устанавливаем временную зону Киева
+        kyiv_tz = pytz.timezone("Europe/Kyiv")
+
         self.scheduler.add_job(
             self.check_schedule_changes,
-            "interval",
-            minutes=interval_minutes,
+            "cron",
+            hour=0,
+            minute=5,
+            timezone=kyiv_tz,
             id="schedule_watcher",
             replace_existing=True,
         )
 
         if not self.scheduler.running:
             self.scheduler.start()
-            print(f"ScheduleWatcher запущен с интервалом {interval_minutes} минут")
+            print("ScheduleWatcher запущен, проверка расписания в 00:05 по Киеву")
 
     async def stop(self) -> None:
         """Останавливает планировщик"""
