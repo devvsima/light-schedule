@@ -4,7 +4,9 @@ from loader import _
 class MessageText:
     @property
     def WELCOME(self):
-        return _("👋, <a href='tg://user?id={}'>{}</a>")
+        return _(
+            "👋, <a href='tg://user?id={}'>{}</a>\nПривіт, це бот який відправляє актуальний розклад відключення світла в Київській області."
+        )
 
     @property
     def INFO(self):

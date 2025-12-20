@@ -5,7 +5,7 @@ from typing import Dict, List
 import requests
 from bs4 import BeautifulSoup
 
-schedule_url = "https://alerts.org.ua/kyivska-oblast/brovary/"
+from data.config import schedule_url
 
 
 def parse_electricity_schedule(url: str = schedule_url):

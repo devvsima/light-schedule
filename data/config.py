@@ -63,3 +63,5 @@ LOG_FILE_PATH: Path = DIR / "logs" / "logs.log"
 database = DatabaseSettings()
 redis = RedisSettings()
 tgbot = TelegramBotSettings()
+
+schedule_url = "https://alerts.org.ua/kyivska-oblast/brovary/"

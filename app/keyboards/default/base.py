@@ -6,7 +6,7 @@ from .kb_generator import simple_kb_generator as gen
 
 del_kb = ReplyKeyboardRemove()
 
-example_simple_kb = gen(["example"])
+base_kb = gen(["🗓 Расписание"], ["🔄 Поменять группу"])
 
 
 def example_kb() -> ReplyKeyboardMarkup:
