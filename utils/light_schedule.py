@@ -7,8 +7,10 @@ from bs4 import BeautifulSoup
 
 from data.config import schedule_url
 
+url = schedule_url
 
-def parse_electricity_schedule(url: str = schedule_url):
+
+def parse_electricity_schedule(url: str = url):
     """
     Парсит расписание отключения света с сайта alerts.org.ua
     """
@@ -101,7 +103,7 @@ def save_schedule_to_file(schedules: List[Dict], filename: str = "schedule.json"
     print(f"\nРасписание сохранено в файл: {filename}")
 
 
-def get_all_groups(url: str = schedule_url) -> List[str]:
+def get_all_groups(url: str = url) -> List[str]:
     """
     Получает список всех доступных групп
 
@@ -112,7 +114,7 @@ def get_all_groups(url: str = schedule_url) -> List[str]:
     return [schedule["group_name"] for schedule in schedules]
 
 
-def get_group_schedule(group_name: str, url: str = schedule_url) -> Dict | None:
+def get_group_schedule(group_name: str, url: str = url) -> Dict | None:
     """
     Получает расписание для конкретной группы
 
@@ -238,16 +240,3 @@ def get_changed_groups(previous: List[Dict], current: List[Dict]) -> List[Dict]:
             changed_groups.append({"group_name": group_name, "type": "deleted"})
 
     return changed_groups
-
-
-if __name__ == "__main__":
-    url = "https://alerts.org.ua/kyivska-oblast/brovary/"
-
-    print("Загрузка расписания отключения света...")
-    schedules = parse_electricity_schedule(url)
-
-    if schedules:
-        print_schedule(schedules)
-        save_schedule_to_file(schedules)
-    else:
-        print("Не удалось получить расписание")

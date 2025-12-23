@@ -20,7 +20,7 @@ async def on_startup() -> None:
     await set_default_commands()
 
     schedule_watcher = ScheduleWatcher(bot, User)
-    schedule_watcher.start()
+    schedule_watcher.start(interval_minutes=30)  # Проверка каждые 30 минут
 
     logger.log("BOT", "~ Bot startup")
 
