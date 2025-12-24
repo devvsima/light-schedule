@@ -27,7 +27,7 @@ async def schedule_checker_task():
             logger.error(f"Ошибка в задаче проверки расписания: {e}")
 
         # Ждем 30 минут (1800 секунд)
-        await asyncio.sleep(18)
+        await asyncio.sleep(1800)
 
 
 async def on_startup() -> None:
