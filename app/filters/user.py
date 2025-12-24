@@ -10,6 +10,10 @@ SHEDULE_TUPLE = (
     "/schedule",
     "🗓 Расписание",
 )
+ALERTS_TOGGLE_TUPLE = (
+    "/alerts",
+    "🔔 Уведомления",
+)
 
 
 class IsGroupChange(Filter):
@@ -20,3 +24,8 @@ class IsGroupChange(Filter):
 class IsShedule(Filter):
     async def __call__(self, message: Message) -> bool:
         return bool(message.text in SHEDULE_TUPLE)
+
+
+class IsToggleAlerts(Filter):
+    async def __call__(self, message: Message) -> bool:
+        return bool(message.text in ALERTS_TOGGLE_TUPLE)
