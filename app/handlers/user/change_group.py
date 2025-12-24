@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters.user import IsGroupChange
+from app.keyboards.default.base import base_kb
 from app.routers import user_router
 from app.states import GrouoChangeState
 from database.models.user import UserModel
@@ -42,7 +43,7 @@ async def _example_command(
     await state.clear()
     await message.answer(
         f"Группа была изминена на:\n{message.text}",
-        parse_mode="HTML",
+        reply_markup=base_kb,
     )
 
 
