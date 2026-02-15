@@ -11,6 +11,45 @@ from loader import bot, dp
 from utils.logging import logger
 
 
+async def github_schedule_loader_task():
+    """Фоновая задача для загрузки расписания с GitHub каждые 20 минут"""
+    from utils.github_schedule import download_schedule_from_github
+
+    # Загружаем сразу при старте
+    logger.log("GITHUB", "Первоначальная загрузка расписания с GitHub")
+    download_schedule_from_github()
+
+    while True:
+        try:
+            # Ждем 20 минут (1200 секунд)
+            await asyncio.sleep(1200)
+
+            # Загружаем расписание
+            download_schedule_from_github()
+        except Exception as e:
+            logger.error(f"Ошибка в задаче загрузки расписания с GitHub: {e}")
+
+
+async def github_schedule_checker_task():
+    """Фоновая задача для проверки изменений в GitHub расписании каждые 20 минут"""
+    from app.business.github_schedule_monitor import github_schedule_monitor
+    from database.connect import async_session
+
+    # Ждем 2 минуты после запуска бота перед первой проверкой
+    # (даем время на первую загрузку)
+    await asyncio.sleep(120)
+
+    while True:
+        try:
+            async with async_session() as session:
+                await github_schedule_monitor.check_and_notify(session)
+        except Exception as e:
+            logger.error(f"Ошибка в задаче проверки GitHub расписания: {e}")
+
+        # Ждем 20 минут (1200 секунд)
+        await asyncio.sleep(1200)
+
+
 async def schedule_checker_task():
     """Фоновая задача для проверки изменений в расписании каждые 30 минут"""
     from app.business.schedule_monitor import schedule_monitor
@@ -33,7 +72,13 @@ async def schedule_checker_task():
 async def on_startup() -> None:
     await set_default_commands()
 
-    # Запускаем фоновую задачу проверки расписания
+    # Запускаем фоновую задачу загрузки расписания с GitHub
+    asyncio.create_task(github_schedule_loader_task())
+
+    # Запускаем фоновую задачу проверки изменений GitHub расписания
+    asyncio.create_task(github_schedule_checker_task())
+
+    # Запускаем фоновую задачу проверки расписания (старый метод)
     asyncio.create_task(schedule_checker_task())
 
     logger.log("BOT", "~ Bot startup")
