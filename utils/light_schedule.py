@@ -156,20 +156,82 @@ def format_schedule_to_text(schedule: Dict) -> str:
     group_name = schedule.get("group_name", "Unknown")
     periods = schedule.get("periods", [])
 
-    text = f"📋 <b>{group_name}</b>\n\n"
+    # Telegram-эмодзи для статусов
+    EMOJI_ON = '<tg-emoji emoji-id="5228957330934111865">🌞</tg-emoji>'
+    EMOJI_OFF = '<tg-emoji emoji-id="5228852207314573962">🌑</tg-emoji>'
+    EMOJI_UNKNOWN = '<tg-emoji emoji-id="5228758276379809110">🤷‍♂️</tg-emoji>'
+
+    text = f"💡 <b>{group_name}</b>\n\n"
+
+    # Подсчет часов
+    total_hours_on = 0.0
+    total_hours_off = 0.0
 
     for period in periods:
         start = period.get("start", "??:??")
         end = period.get("end", "??:??")
         status = period.get("status", "UNKNOWN")
 
+        # Вычисляем длительность периода
+        duration_hours = 0.0
+        duration_text = ""
+        try:
+            start_h, start_m = map(int, start.split(":"))
+            end_h, end_m = map(int, end.split(":"))
+
+            # Конвертируем в минуты
+            start_minutes = start_h * 60 + start_m
+            end_minutes = end_h * 60 + end_m
+
+            # Обрабатываем переход через полночь
+            if end_minutes < start_minutes:
+                end_minutes += 24 * 60
+
+            duration_hours = (end_minutes - start_minutes) / 60
+
+            # Форматируем длительность
+            if duration_hours == int(duration_hours):
+                hours_int = int(duration_hours)
+                if hours_int == 1:
+                    duration_text = f" ({hours_int} год)"
+                else:
+                    duration_text = f" ({hours_int} год)"
+            else:
+                duration_text = f" ({duration_hours:.1f} год)"
+
+            if status == "ON":
+                total_hours_on += duration_hours
+            elif status == "OFF":
+                total_hours_off += duration_hours
+        except:
+            pass
+
         # Иконка в зависимости от статуса
-        icon = "💡" if status == "ON" else "⚫" if status == "OFF" else "❓"
+        icon = EMOJI_ON if status == "ON" else EMOJI_OFF if status == "OFF" else EMOJI_UNKNOWN
         status_text = (
-            "включено" if status == "ON" else "отключено" if status == "OFF" else "неизвестно"
+            "включено" if status == "ON" else "отключено" if status == "OFF" else "невідомо"
         )
 
-        text += f"{icon} {start} - {end}: <i>{status_text}</i>\n"
+        text += f"{icon} <code>{start} - {end}</code>:{duration_text} {status_text}\n"
+
+    # Добавляем итоговую статистику
+    text += "\n" + "─" * 30 + "\n"
+    text += f"<b>📊 Загальна статистика:</b>\n"
+
+    # Форматируем часы красиво (целые числа без дробей, дроби с одним знаком)
+    hours_on_str = (
+        f"{int(total_hours_on)}"
+        if total_hours_on == int(total_hours_on)
+        else f"{total_hours_on:.1f}"
+    )
+    hours_off_str = (
+        f"{int(total_hours_off)}"
+        if total_hours_off == int(total_hours_off)
+        else f"{total_hours_off:.1f}"
+    )
+
+    text += f"{EMOJI_ON} Світло буде: <b>{hours_on_str}</b> год.\n"
+    text += f"{EMOJI_OFF} Світла не буде: <b>{hours_off_str}</b> год.\n"
 
     return text
 

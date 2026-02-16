@@ -179,17 +179,16 @@ class ScheduleMonitor:
         group_name = change["group_name"]
 
         if change_type == "new":
-            text = f"🆕 <b>Новое расписание для {group_name}</b>\n\n"
+            text = f"🆕 <b>Нове розкладу для {group_name}</b>\n\n"
             text += format_schedule_to_text(change["schedule"])
         elif change_type == "updated":
-            text = f"🔄 <b>Расписание изменилось для {group_name}</b>\n\n"
-            text += "<b>Новое расписание:</b>\n"
+            text = f"⚡ <b>УВАГА! Розклад змінився</b>\n\n"
             text += format_schedule_to_text(change["new_schedule"])
         elif change_type == "deleted":
-            text = f"⚠️ <b>Расписание удалено для {group_name}</b>\n\n"
-            text += "Пожалуйста, проверьте актуальную информацию."
+            text = f"⚠️ <b>Розклад видалено для {group_name}</b>\n\n"
+            text += "Будь ласка, перевірте актуальну інформацію."
         else:
-            text = f"ℹ️ Изменение в расписании для {group_name}"
+            text = f"ℹ️ Зміни в розкладі для {group_name}"
 
         return text
 

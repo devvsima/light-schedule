@@ -29,13 +29,13 @@ SCHEDULE_FILE = Path(DIR) / "kyiv-region.json"
 EMOJI_LIGHT_ON = '<tg-emoji emoji-id="5228957330934111865">🌞</tg-emoji>'  # Світло є
 EMOJI_LIGHT_OFF = '<tg-emoji emoji-id="5228852207314573962">🌑</tg-emoji>'  # Світла немає
 EMOJI_MAYBE_OFF = (
-    '<tg-emoji emoji-id="5228758276379809110">🤷‍♂️</tg-emoji>'  # Можливо відключення / частково
+    '<tg-emoji emoji-id="5231399367734235038">🤷‍♂️</tg-emoji>'  # Можливо відключення / частково
 )
 EMOJI_OFF_FIRST_30 = (
-    '<tg-emoji emoji-id="5228758276379809110">🤷‍♂️</tg-emoji>'  # Відключення перші 30 хв
+    '<tg-emoji emoji-id="5231399367734235038">🤷‍♂️</tg-emoji>'  # Відключення перші 30 хв
 )
 EMOJI_OFF_SECOND_30 = (
-    '<tg-emoji emoji-id="5228758276379809110">🤷‍♂️</tg-emoji>'  # Відключення другі 30 хв
+    '<tg-emoji emoji-id="5231399367734235038">🤷‍♂️</tg-emoji>'  # Відключення другі 30 хв
 )
 EMOJI_UNKNOWN = "❓"  # Невідомо
 
@@ -53,8 +53,8 @@ EMOJI_INFO = "ℹ️"  # Информация
 EMOJI_FLASH = "⚡"  # Молния (для акцентов)
 
 # Визуальные разделители
-SEPARATOR_THIN = "─" * 30
-SEPARATOR_THICK = "━" * 30
+SEPARATOR_THIN = "─" * 10
+SEPARATOR_THICK = "━" * 10
 SEPARATOR_DOTS = "· · · · · · · · ·"
 
 
@@ -233,48 +233,99 @@ def format_schedule_text(group_input: str, timestamp: Optional[int] = None) -> s
     # ═══════════════════════════════════════════════════════════
     # ФОРМИРУЕМ ЗАГОЛОВОК
     # ═══════════════════════════════════════════════════════════
-    text = f"{EMOJI_BULB} <b>Розклад відключень світла</b>\n"
-    text += f"<b>Група: {group_name}</b>\n"
-
-    # Получаем и добавляем дату
-    if timestamp:
-        date_obj = datetime.fromtimestamp(timestamp)
-        text += f"{EMOJI_CALENDAR} {date_obj.strftime('%d.%m.%Y')}\n"
-
-    text += f"\n{SEPARATOR_THICK}\n\n"
+    text = f"{EMOJI_BULB} <b>{group_name}</b>\n\n"
 
     # ═══════════════════════════════════════════════════════════
-    # ФОРМИРУЕМ РАСПИСАНИЕ (2 БЛОКА: 00:00-12:00 и 12:00-00:00)
+    # ФОРМИРУЕМ КОМПАКТНОЕ РАСПИСАНИЕ (ОБЪЕДИНЯЕМ ПЕРИОДЫ)
     # ═══════════════════════════════════════════════════════════
-    time_blocks = {
-        "<b>00:00 - 12:00</b>": range(1, 13),
-        "<b>12:00 - 00:00</b>": range(13, 25),
-    }
 
-    for block_title, hours_range in time_blocks.items():
-        text += f"{block_title}\n"
+    # Подсчет часов
+    total_hours_on = 0.0
+    total_hours_off = 0.0
+    total_hours_uncertain = 0.0
 
-        for hour in hours_range:
-            status = schedule.get(str(hour), "unknown")
+    # Группируем последовательные часы с одинаковым статусом
+    periods = []
+    current_status = None
+    period_start = 0
 
-            # Определяем иконку и текст статуса
-            icon, status_text = _get_status_icon_and_text(status, time_types)
+    for hour in range(1, 25):
+        status = schedule.get(str(hour), "unknown")
 
-            # Форматируем время
-            hour_start = hour - 1
-            hour_end = hour
-            time_str = f"{hour_start:02d}:00-{hour_end:02d}:00"
+        if status != current_status:
+            # Завершаем предыдущий период
+            if current_status is not None:
+                periods.append({"start": period_start, "end": hour - 1, "status": current_status})
 
-            text += f"  {icon} <code>{time_str}</code> {status_text}\n"
+            # Начинаем новый период
+            current_status = status
+            period_start = hour - 1
 
-        text += "\n"
+    # Завершаем последний период
+    if current_status is not None:
+        periods.append({"start": period_start, "end": 24, "status": current_status})
+
+    # Выводим периоды
+    for period in periods:
+        start_time = f"{period['start']:02d}:00"
+        end_time = f"{period['end']:02d}:00" if period["end"] < 24 else "24:00"
+        status = period["status"]
+
+        # Вычисляем длительность периода
+        duration = period["end"] - period["start"]
+
+        # Подсчитываем часы для статистики
+        if status == "yes":
+            total_hours_on += duration
+        elif status == "no":
+            total_hours_off += duration
+        elif status in ["first", "second"]:
+            # Половина часа без света, половина со светом
+            total_hours_off += duration * 0.5
+            total_hours_on += duration * 0.5
+        elif status in ["maybe", "mfirst", "msecond"]:
+            total_hours_uncertain += duration
+
+        # Форматируем длительность
+        if duration == int(duration):
+            duration_int = int(duration)
+            duration_text = f" ({duration_int} год)"
+        else:
+            duration_text = f" ({duration:.1f} год)"
+
+        # Определяем иконку и текст статуса
+        icon, status_text = _get_status_icon_and_text(status, time_types)
+
+        text += f"{icon} <code>{start_time} - {end_time}</code>:{duration_text} {status_text}\n\n"
 
     # ═══════════════════════════════════════════════════════════
-    # ИНФОРМАЦИЯ ОБ ОБНОВЛЕНИИ
+    # СТАТИСТИКА
     # ═══════════════════════════════════════════════════════════
-    update_time = data.get("fact", {}).get("update", "Невідомо")
-    text += f"{SEPARATOR_THIN}\n"
-    text += f"<i>{EMOJI_CLOCK} Оновлено: {update_time}</i>"
+    text += f"\n{SEPARATOR_THIN}\n"
+    text += f"<b>📊 Загальна статистика:</b>\n"
+
+    # Форматируем часы красиво (целые числа без дробей, дроби с одним знаком)
+    hours_on_str = (
+        f"{int(total_hours_on)}"
+        if total_hours_on == int(total_hours_on)
+        else f"{total_hours_on:.1f}"
+    )
+    hours_off_str = (
+        f"{int(total_hours_off)}"
+        if total_hours_off == int(total_hours_off)
+        else f"{total_hours_off:.1f}"
+    )
+
+    text += f"{EMOJI_LIGHT_ON} Світло буде: <b>{hours_on_str}</b> год.\n"
+    text += f"{EMOJI_LIGHT_OFF} Світла не буде: <b>{hours_off_str}</b> год.\n"
+
+    if total_hours_uncertain > 0:
+        hours_uncertain_str = (
+            f"{int(total_hours_uncertain)}"
+            if total_hours_uncertain == int(total_hours_uncertain)
+            else f"{total_hours_uncertain:.1f}"
+        )
+        text += f"{EMOJI_MAYBE_OFF} Невідомо: <b>{hours_uncertain_str}</b> год.\n"
 
     return text
 
