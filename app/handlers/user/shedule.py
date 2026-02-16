@@ -6,7 +6,6 @@ from app.filters.user import IsShedule
 from app.routers import user_router
 from database.models.user import UserModel
 from utils.github_schedule import format_schedule_text, get_all_available_groups, parse_group_number
-from utils.light_schedule import format_schedule_to_text, get_all_groups, get_group_schedule
 
 
 @user_router.message(StateFilter(None), Command("schedule"))

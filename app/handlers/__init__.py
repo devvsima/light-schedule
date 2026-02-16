@@ -16,8 +16,8 @@ def setup_handlers(dp: Dispatcher) -> None:
 
     "В порядке срабатывания"
     dp.include_routers(
+        admin_router,  # 3
         common_router,  # 1
         user_router,  # 2
-        admin_router,  # 3
         voide_router,  # 4
     )
