@@ -79,7 +79,7 @@ async def on_startup() -> None:
     asyncio.create_task(github_schedule_checker_task())
 
     # Запускаем фоновую задачу проверки расписания (старый метод)
-    asyncio.create_task(schedule_checker_task())
+    # asyncio.create_task(schedule_checker_task())
 
     logger.log("BOT", "~ Bot startup")
 
