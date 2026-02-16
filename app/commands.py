@@ -5,10 +5,10 @@ from loader import _, bot, i18n
 
 def get_default_commands(lang: str = "en"):
     commands = [
-        BotCommand(command="/start", description=_("start chat", locale=lang)),
-        BotCommand(command="/group", description=_("referal system", locale=lang)),
-        BotCommand(command="/schedule", description=_("referal system", locale=lang)),
-        BotCommand(command="/lang", description=_("change language", locale=lang)),
+        BotCommand(command="/start", description=_("Почати чат", locale=lang)),
+        BotCommand(command="/group", description=_("Зміна группи", locale=lang)),
+        BotCommand(command="/schedule", description=_("Розклад відключень", locale=lang)),
+        BotCommand(command="/lang", description=_("Змінити мову", locale=lang)),
     ]
 
     return commands
@@ -19,7 +19,7 @@ def get_admins_commands(lang: str = "en"):
     commands.extend(
         [
             BotCommand(command="/admin", description=_("admin panel", locale=lang)),
-            BotCommand(command="/logs", description=_("admin panel", locale=lang)),
+            BotCommand(command="/logs", description=_("send logs", locale=lang)),
         ]
     )
     return commands

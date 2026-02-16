@@ -18,7 +18,7 @@ async def _example_command(message: types.Message, state: FSMContext) -> None:
     await state.set_state(GrouoChangeState.group_change)
 
     text = """
-Напишите название своей группы в таком формате:
+Напишіть назву своєї групи в такому форматі:
     1.1,
     1.2,
     2.1,
@@ -37,12 +37,12 @@ async def _example_command(
     if group := to_float_or_none(message.text):
         await User.update(session=session, id=user.id, group=group)
     else:
-        await message.answer("Указана неверная группа, попробуйте ещё раз")
+        await message.answer("Вказано невірну групу, спробуйте ще раз")
         return
 
     await state.clear()
     await message.answer(
-        f"Группа была изминена на:\n{message.text}",
+        f"Групу було змінено на:\n{message.text}",
         reply_markup=base_kb,
     )
 

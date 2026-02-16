@@ -3,16 +3,16 @@ from aiogram.types import Message
 
 GROUP_CHANGE_TUPLE = (
     "/group",
-    "Указать группу",
-    "🔄 Поменять группу",
+    "Вказати групу",
+    "🔄 Змінити групу",
 )
 SHEDULE_TUPLE = (
     "/schedule",
-    "🗓 Расписание",
+    "🗓 Розклад",
 )
 ALERTS_TOGGLE_TUPLE = (
     "/alerts",
-    "🔔 Уведомления",
+    "🔔 Сповіщення",
 )
 
 

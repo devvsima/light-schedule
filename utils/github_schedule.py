@@ -244,59 +244,114 @@ def format_schedule_text(group_input: str, timestamp: Optional[int] = None) -> s
     total_hours_off = 0.0
     total_hours_uncertain = 0.0
 
-    # Группируем последовательные часы с одинаковым статусом
-    periods = []
-    current_status = None
-    period_start = 0
+    # Создаем массив получасовых сегментов (48 сегментов в сутках)
+    # Каждый сегмент: (час, минута, статус)
+    # Статусы: "on", "off", "uncertain"
+    half_hour_segments = []
 
     for hour in range(1, 25):
         status = schedule.get(str(hour), "unknown")
 
-        if status != current_status:
-            # Завершаем предыдущий период
-            if current_status is not None:
-                periods.append({"start": period_start, "end": hour - 1, "status": current_status})
+        if status == "yes":
+            # Оба получаса включены
+            half_hour_segments.append(("on", hour - 1, 0))
+            half_hour_segments.append(("on", hour - 1, 30))
+            total_hours_on += 1.0
+        elif status == "no":
+            # Оба получаса выключены
+            half_hour_segments.append(("off", hour - 1, 0))
+            half_hour_segments.append(("off", hour - 1, 30))
+            total_hours_off += 1.0
+        elif status == "first":
+            # Первые 30 мин выключено, вторые 30 мин включено
+            half_hour_segments.append(("off", hour - 1, 0))
+            half_hour_segments.append(("on", hour - 1, 30))
+            total_hours_off += 0.5
+            total_hours_on += 0.5
+        elif status == "second":
+            # Первые 30 мин включено, вторые 30 мин выключено
+            half_hour_segments.append(("on", hour - 1, 0))
+            half_hour_segments.append(("off", hour - 1, 30))
+            total_hours_on += 0.5
+            total_hours_off += 0.5
+        elif status in ["maybe", "mfirst", "msecond"]:
+            # Неопределенный статус
+            half_hour_segments.append(("uncertain", hour - 1, 0))
+            half_hour_segments.append(("uncertain", hour - 1, 30))
+            total_hours_uncertain += 1.0
+        else:
+            # Неизвестный статус
+            half_hour_segments.append(("uncertain", hour - 1, 0))
+            half_hour_segments.append(("uncertain", hour - 1, 30))
 
-            # Начинаем новый период
-            current_status = status
-            period_start = hour - 1
+    # Группируем последовательные сегменты с одинаковым статусом
+    periods = []
+    if half_hour_segments:
+        current_status = half_hour_segments[0][0]
+        start_hour = half_hour_segments[0][1]
+        start_min = half_hour_segments[0][2]
 
-    # Завершаем последний период
-    if current_status is not None:
-        periods.append({"start": period_start, "end": 24, "status": current_status})
+        for i in range(1, len(half_hour_segments)):
+            segment_status, hour, minute = half_hour_segments[i]
+
+            if segment_status != current_status:
+                # Завершаем текущий период
+                periods.append(
+                    {
+                        "status": current_status,
+                        "start_hour": start_hour,
+                        "start_min": start_min,
+                        "end_hour": hour,
+                        "end_min": minute,
+                    }
+                )
+
+                # Начинаем новый период
+                current_status = segment_status
+                start_hour = hour
+                start_min = minute
+
+        # Добавляем последний период (до 24:00)
+        periods.append(
+            {
+                "status": current_status,
+                "start_hour": start_hour,
+                "start_min": start_min,
+                "end_hour": 24,
+                "end_min": 0,
+            }
+        )
 
     # Выводим периоды
     for period in periods:
-        start_time = f"{period['start']:02d}:00"
-        end_time = f"{period['end']:02d}:00" if period["end"] < 24 else "24:00"
-        status = period["status"]
+        start_time = f"{period['start_hour']:02d}:{period['start_min']:02d}"
+        end_time = f"{period['end_hour']:02d}:{period['end_min']:02d}"
 
-        # Вычисляем длительность периода
-        duration = period["end"] - period["start"]
-
-        # Подсчитываем часы для статистики
-        if status == "yes":
-            total_hours_on += duration
-        elif status == "no":
-            total_hours_off += duration
-        elif status in ["first", "second"]:
-            # Половина часа без света, половина со светом
-            total_hours_off += duration * 0.5
-            total_hours_on += duration * 0.5
-        elif status in ["maybe", "mfirst", "msecond"]:
-            total_hours_uncertain += duration
+        # Вычисляем длительность в часах
+        start_total_minutes = period["start_hour"] * 60 + period["start_min"]
+        end_total_minutes = period["end_hour"] * 60 + period["end_min"]
+        duration_hours = (end_total_minutes - start_total_minutes) / 60
 
         # Форматируем длительность
-        if duration == int(duration):
-            duration_int = int(duration)
+        if duration_hours == int(duration_hours):
+            duration_int = int(duration_hours)
             duration_text = f" ({duration_int} год)"
         else:
-            duration_text = f" ({duration:.1f} год)"
+            duration_text = f" ({duration_hours:.1f} год)"
 
         # Определяем иконку и текст статуса
-        icon, status_text = _get_status_icon_and_text(status, time_types)
+        status = period["status"]
+        if status == "on":
+            icon = EMOJI_LIGHT_ON
+            status_text = "Світло є"
+        elif status == "off":
+            icon = EMOJI_LIGHT_OFF
+            status_text = "Світла немає"
+        else:  # uncertain
+            icon = EMOJI_MAYBE_OFF
+            status_text = "Невідомо"
 
-        text += f"{icon} <code>{start_time} - {end_time}</code>:{duration_text} {status_text}\n\n"
+        text += f"{icon} <code>{start_time} - {end_time}</code>:{duration_text} {status_text}\n"
 
     # ═══════════════════════════════════════════════════════════
     # СТАТИСТИКА
