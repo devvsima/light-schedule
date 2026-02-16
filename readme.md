@@ -1,4 +1,4 @@
-# Світло-бот, надсилає розклад відключень для Київської області
+# [Світло-бот, надсилає розклад відключень для Київської області](https://t.me/svitlo_kyiv_obl_bot)
 
 ## Бот бере актуальну інформацію з сайту [DTEK](https://raw.githubusercontent.com/Baskerville42/outage-data-ua/main/data/kyiv-region.json)
 
